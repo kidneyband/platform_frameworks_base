@@ -45,21 +45,21 @@ struct LinkOptions {
   bool auto_add_overlay = false;
   bool override_styles_instead_of_overlaying = false;
   OutputFormat output_format = OutputFormat::kApk;
-  Maybe<std::string> rename_resources_package;
+  std::optional<std::string> rename_resources_package;
 
   // Java/Proguard options.
-  Maybe<std::string> generate_java_class_path;
-  Maybe<std::string> custom_java_package;
+  std::optional<std::string> generate_java_class_path;
+  std::optional<std::string> custom_java_package;
   std::set<std::string> extra_java_packages;
-  Maybe<std::string> generate_text_symbols_path;
-  Maybe<std::string> generate_proguard_rules_path;
-  Maybe<std::string> generate_main_dex_proguard_rules_path;
+  std::optional<std::string> generate_text_symbols_path;
+  std::optional<std::string> generate_proguard_rules_path;
+  std::optional<std::string> generate_main_dex_proguard_rules_path;
   bool generate_conditional_proguard_rules = false;
   bool generate_minimal_proguard_rules = false;
   bool generate_non_final_ids = false;
   bool no_proguard_location_reference = false;
   std::vector<std::string> javadoc_annotations;
-  Maybe<std::string> private_symbols;
+  std::optional<std::string> private_symbols;
 
   // Optimizations/features.
   bool no_auto_version = false;
@@ -98,7 +98,7 @@ struct LinkOptions {
 
   // Stable ID options.
   std::unordered_map<ResourceName, ResourceId> stable_id_map;
-  Maybe<std::string> resource_id_map_path;
+  std::optional<std::string> resource_id_map_path;
 
   // When 'true', allow reserved package IDs to be used for applications. Pre-O, the platform
   // treats negative resource IDs [those with a package ID of 0x80 or higher] as invalid.
@@ -324,20 +324,20 @@ class LinkCommand : public Command {
 
   std::vector<std::string> overlay_arg_list_;
   std::vector<std::string> extra_java_packages_;
-  Maybe<std::string> package_id_;
+  std::optional<std::string> package_id_;
   std::vector<std::string> configs_;
-  Maybe<std::string> preferred_density_;
-  Maybe<std::string> product_list_;
-  Maybe<std::string> no_compress_regex;
+  std::optional<std::string> preferred_density_;
+  std::optional<std::string> product_list_;
+  std::optional<std::string> no_compress_regex;
   bool legacy_x_flag_ = false;
   bool require_localization_ = false;
   bool verbose_ = false;
   bool shared_lib_ = false;
   bool static_lib_ = false;
   bool proto_format_ = false;
-  Maybe<std::string> stable_id_file_path_;
+  std::optional<std::string> stable_id_file_path_;
   std::vector<std::string> split_args_;
-  Maybe<std::string> trace_folder_;
+  std::optional<std::string> trace_folder_;
 };
 
 }// namespace aapt

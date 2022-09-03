@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.UserInfo;
 import android.net.ConnectivityManager;
 import android.net.INetd;
 import android.net.IVpnManager;
@@ -137,6 +138,12 @@ public class VpnManagerService extends IVpnManager.Stub {
         public Vpn createVpn(Looper looper, Context context, INetworkManagementService nms,
                 INetd netd, int userId) {
             return new Vpn(looper, context, nms, netd, userId, new VpnProfileStore());
+        }
+
+        /** Create a LockDownVpnTracker. */
+        public LockdownVpnTracker createLockDownVpnTracker(Context context, Handler handler,
+                Vpn vpn, VpnProfile profile) {
+            return new LockdownVpnTracker(context, handler, vpn,  profile);
         }
     }
 
@@ -502,8 +509,7 @@ public class VpnManagerService extends IVpnManager.Stub {
                 logw("VPN for user " + user + " not ready yet. Skipping lockdown");
                 return false;
             }
-            setLockdownTracker(
-                    new LockdownVpnTracker(mContext, mHandler, vpn,  profile));
+            setLockdownTracker(mDeps.createLockDownVpnTracker(mContext, mHandler, vpn,  profile));
         }
 
         return true;
@@ -769,8 +775,13 @@ public class VpnManagerService extends IVpnManager.Stub {
         }
     };
 
-    @VisibleForTesting
-    void onUserStarted(int userId) {
+    private void onUserStarted(int userId) {
+        UserInfo user = mUserManager.getUserInfo(userId);
+        if (user == null) {
+            logw("Started user doesn't exist. UserId: " + userId);
+            return;
+        }
+
         synchronized (mVpns) {
             Vpn userVpn = mVpns.get(userId);
             if (userVpn != null) {
@@ -779,7 +790,8 @@ public class VpnManagerService extends IVpnManager.Stub {
             }
             userVpn = mDeps.createVpn(mHandler.getLooper(), mContext, mNMS, mNetd, userId);
             mVpns.put(userId, userVpn);
-            if (mUserManager.getUserInfo(userId).isPrimary() && isLockdownVpnEnabled()) {
+
+            if (user.isPrimary() && isLockdownVpnEnabled()) {
                 updateLockdownVpn();
             }
         }
@@ -854,8 +866,7 @@ public class VpnManagerService extends IVpnManager.Stub {
         }
     }
 
-    @VisibleForTesting
-    void onPackageRemoved(String packageName, int uid, boolean isReplacing) {
+    private void onPackageRemoved(String packageName, int uid, boolean isReplacing) {
         if (TextUtils.isEmpty(packageName) || uid < 0) {
             Log.wtf(TAG, "Invalid package in onPackageRemoved: " + packageName + " | " + uid);
             return;
@@ -878,8 +889,7 @@ public class VpnManagerService extends IVpnManager.Stub {
         }
     }
 
-    @VisibleForTesting
-    void onPackageAdded(String packageName, int uid, boolean isReplacing) {
+    private void onPackageAdded(String packageName, int uid, boolean isReplacing) {
         if (TextUtils.isEmpty(packageName) || uid < 0) {
             Log.wtf(TAG, "Invalid package in onPackageAdded: " + packageName + " | " + uid);
             return;
@@ -896,9 +906,15 @@ public class VpnManagerService extends IVpnManager.Stub {
     }
 
     private void onUserUnlocked(int userId) {
+        UserInfo user = mUserManager.getUserInfo(userId);
+        if (user == null) {
+            logw("Unlocked user doesn't exist. UserId: " + userId);
+            return;
+        }
+
         synchronized (mVpns) {
             // User present may be sent because of an unlock, which might mean an unlocked keystore.
-            if (mUserManager.getUserInfo(userId).isPrimary() && isLockdownVpnEnabled()) {
+            if (user.isPrimary() && isLockdownVpnEnabled()) {
                 updateLockdownVpn();
             } else {
                 startAlwaysOnVpn(userId);

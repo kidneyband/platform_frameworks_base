@@ -205,6 +205,7 @@ public final class ProfcollectForwardingService extends SystemService {
                     .setRequiresDeviceIdle(true)
                     .setRequiresCharging(true)
                     .setPeriodic(BG_PROCESS_PERIOD)
+                    .setPriority(JobInfo.PRIORITY_MIN)
                     .build());
         }
 
@@ -274,35 +275,10 @@ public final class ProfcollectForwardingService extends SystemService {
         }
     }
 
-    private class AppLaunchObserver implements ActivityMetricsLaunchObserver {
+    private class AppLaunchObserver extends ActivityMetricsLaunchObserver {
         @Override
         public void onIntentStarted(Intent intent, long timestampNanos) {
             traceOnAppStart(intent.getPackage());
-        }
-
-        @Override
-        public void onIntentFailed() {
-            // Ignored
-        }
-
-        @Override
-        public void onActivityLaunched(byte[] activity, int temperature) {
-            // Ignored
-        }
-
-        @Override
-        public void onActivityLaunchCancelled(byte[] abortingActivity) {
-            // Ignored
-        }
-
-        @Override
-        public void onActivityLaunchFinished(byte[] finalActivity, long timestampNanos) {
-            // Ignored
-        }
-
-        @Override
-        public void onReportFullyDrawn(byte[] activity, long timestampNanos) {
-            // Ignored
         }
     }
 
